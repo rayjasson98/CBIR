@@ -1,0 +1,55 @@
+[+] query: database/apam_balik/001.jpg
+
+database/rojak/146.jpg: 1.2238520408163265,     Class rojak
+database/karipap/131.jpg:       1.2414301658163267,     Class karipap
+database/karipap/021.jpg:       1.245655293367347,      Class karipap
+database/rojak/034.jpg: 1.2474091198979593,     Class rojak
+database/goreng_pisang/005.jpg: 1.248485331632653,      Class goreng_pisang
+
+[+] query: database/goreng_pisang/001.jpg
+
+database/goreng_pisang/017.jpg: 1.1833944515306123,     Class goreng_pisang
+database/otak_otak/020.jpg:     1.2983732681546818,     Class otak_otak
+database/goreng_pisang/206.jpg: 1.34375,        Class goreng_pisang
+database/otak_otak/030.jpg:     1.3724334577707058,     Class otak_otak
+database/otak_otak/028.jpg:     1.4027288711271932,     Class otak_otak
+
+[+] query: database/karipap/001.jpg
+
+database/karipap/006.jpg:       1.073062818877551,      Class karipap
+database/satay/056.jpg: 1.400829081632653,      Class satay
+database/karipap/146.jpg:       1.4119100765306123,     Class karipap
+database/satay/043.jpg: 1.4392936862244898,     Class satay
+database/goreng_pisang/050.jpg: 1.4655213647959184,     Class goreng_pisang
+
+[+] query: database/maggi_goreng/001.jpg
+
+database/maggi_goreng/133.jpg:  1.1894132653061225,     Class maggi_goreng
+database/rojak/140.jpg: 1.2233338647959182,     Class rojak
+database/maggi_goreng/061.jpg:  1.2329001913265305,     Class maggi_goreng
+database/rojak/163.jpg: 1.2343351403061225,     Class rojak
+database/goreng_pisang/191.jpg: 1.2463329081632653,     Class goreng_pisang
+
+[+] query: database/otak_otak/001.jpg
+
+database/otak_otak/129.jpg:     1.3256167810994568,     Class otak_otak
+database/otak_otak/130.jpg:     1.3256167810994568,     Class otak_otak
+database/maggi_goreng/214.jpg:  1.366267876654558,      Class maggi_goreng
+database/otak_otak/215.jpg:     1.3960170092121043,     Class otak_otak
+database/maggi_goreng/204.jpg:  1.40282054432783,       Class maggi_goreng
+
+[+] query: database/rojak/001.jpg
+
+database/maggi_goreng/008.jpg:  1.1550940688775508,     Class maggi_goreng
+database/rojak/034.jpg: 1.1716358418367347,     Class rojak
+database/satay/114.jpg: 1.175342793367347,      Class satay
+database/goreng_pisang/213.jpg: 1.1848692602040818,     Class goreng_pisang
+database/maggi_goreng/055.jpg:  1.203563456632653,      Class maggi_goreng
+
+[+] query: database/satay/001.jpg
+
+database/satay/006.jpg: 1.1017617984693877,     Class satay
+database/rojak/175.jpg: 1.240951849489796,      Class rojak
+database/maggi_goreng/133.jpg:  1.2655851403061225,     Class maggi_goreng
+database/rojak/140.jpg: 1.2852758290816326,     Class rojak
+database/maggi_goreng/077.jpg:  1.2990274234693877,     Class maggi_goreng
