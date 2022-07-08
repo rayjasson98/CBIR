@@ -1,13 +1,8 @@
-# -*- coding: utf-8 -*-
-
-from __future__ import print_function
-
 from scipy import spatial
 import numpy as np
 
 
-class Evaluation(object):
-
+class Evaluation():
     def make_samples(self):
         raise NotImplementedError("Needs to implemented this method")
 
@@ -53,14 +48,18 @@ def AP(label, results, sort=True):
     '''
     if sort:
         results = sorted(results, key=lambda x: x['dis'])
+
     precision = []
     hit = 0
+
     for i, result in enumerate(results):
         if result['cls'] == label:
             hit += 1
             precision.append(hit / (i+1.))
+
     if hit == 0:
         return 0.
+
     return np.mean(precision)
 
 
@@ -84,26 +83,32 @@ def infer(query, samples=None, db=None, sample_db_fn=None, depth=None, d_type='d
         depth       : retrieved depth during inference, the default depth is equal to database size
         d_type      : distance type
     '''
-    assert samples != None or (db != None and sample_db_fn !=
-                               None), "need to give either samples or db plus sample_db_fn"
+    assert (samples != None or (db != None and sample_db_fn != None)),\
+        "need to give either samples or db plus sample_db_fn"
+
     if db:
         samples = sample_db_fn(db)
 
     q_img, q_cls, q_hist = query['img'], query['cls'], query['hist']
     results = []
+
     for idx, sample in enumerate(samples):
         s_img, s_cls, s_hist = sample['img'], sample['cls'], sample['hist']
+
         if q_img == s_img:
             continue
+
         results.append({
             'dis': distance(q_hist, s_hist, d_type=d_type),
             'cls': s_cls
         })
+
     results = sorted(results, key=lambda x: x['dis'])
+
     if depth and depth <= len(results):
         results = results[:depth]
-    ap = AP(q_cls, results, sort=False)
 
+    ap = AP(q_cls, results, sort=False)
     return ap, results
 
 
@@ -120,6 +125,7 @@ def evaluate(db, sample_db_fn, depth=None, d_type='d1'):
     ret = {c: [] for c in classes}
 
     samples = sample_db_fn(db)
+
     for query in samples:
         ap, _ = infer(query, samples=samples, depth=depth, d_type=d_type)
         ret[query['cls']].append(ap)
@@ -145,7 +151,9 @@ def evaluate_class(db, f_class=None, f_instance=None, depth=None, d_type='d1'):
         f = f_class()
     elif f_instance:
         f = f_instance
+
     samples = f.make_samples(db)
+
     for query in samples:
         ap, _ = infer(query, samples=samples, depth=depth, d_type=d_type)
         ret[query['cls']].append(ap)

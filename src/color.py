@@ -1,71 +1,27 @@
-# -*- coding: utf-8 -*-
-
-from __future__ import print_function
-
-from evaluate import distance, evaluate_class
-from DB import Database
-
-import pickle
-import numpy as np
-import cv2
 import itertools
 import os
+import pickle
 
-# configs for histogram
-n_bin = 12        # histogram bins
-n_slice = 3         # slice image
-h_type = 'region'  # global or region
-d_type = 'd1'      # distance type
+import cv2
+import numpy as np
 
-depth = 3         # retrieved depth, set to None will count the ap for whole database
+from DB import Database
+from evaluate import evaluate_class
 
-''' MMAP
-     depth
-      depthNone, region,bin12,slice3, distance=d1, MMAP 0.273745840034
-      depth100,  region,bin12,slice3, distance=d1, MMAP 0.406007856783
-      depth30,   region,bin12,slice3, distance=d1, MMAP 0.516738512679
-      depth10,   region,bin12,slice3, distance=d1, MMAP 0.614047666604
-      depth5,    region,bin12,slice3, distance=d1, MMAP 0.650125
-      depth3,    region,bin12,slice3, distance=d1, MMAP 0.657166666667
-      depth1,    region,bin12,slice3, distance=d1, MMAP 0.62
+N_BIN = 12
+N_SLICE = 3
+H_TYPE = 'region'
+D_TYPE = 'd2'
+DEPTH = 5
 
-     (exps below use depth=None)
-     
-     d_type
-      global,bin6,d1,MMAP 0.242345913685
-      global,bin6,cosine,MMAP 0.184176505586
+CACHE_DIR = 'cache'
 
-     n_bin
-      region,bin10,slice4,d1,MMAP 0.269872790396
-      region,bin12,slice4,d1,MMAP 0.271520862017
-
-      region,bin6,slcie3,d1,MMAP 0.262819311357
-      region,bin12,slice3,d1,MMAP 0.273745840034
-
-     n_slice
-      region,bin12,slice2,d1,MMAP 0.266076627332
-      region,bin12,slice3,d1,MMAP 0.273745840034
-      region,bin12,slice4,d1,MMAP 0.271520862017
-      region,bin14,slice3,d1,MMAP 0.272386552594
-      region,bin14,slice5,d1,MMAP 0.266877181379
-      region,bin16,slice3,d1,MMAP 0.273716788003
-      region,bin16,slice4,d1,MMAP 0.272221031804
-      region,bin16,slice8,d1,MMAP 0.253823360098
-
-     h_type
-      region,bin4,slice2,d1,MMAP 0.23358615622
-      global,bin4,d1,MMAP 0.229125435746
-'''
-
-# cache dir
-cache_dir = 'cache'
-if not os.path.exists(cache_dir):
-    os.makedirs(cache_dir)
+if not os.path.exists(CACHE_DIR):
+    os.makedirs(CACHE_DIR)
 
 
-class Color(object):
-
-    def histogram(self, input, n_bin=n_bin, type=h_type, n_slice=n_slice, normalize=True):
+class Color():
+    def histogram(self, input, n_bin=N_BIN, h_type=H_TYPE, n_slice=N_SLICE, normalize=True):
         ''' count img color histogram
 
           arguments
@@ -87,14 +43,14 @@ class Color(object):
         else:
             img = cv2.imread(input, cv2.IMREAD_COLOR)
             img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+
         height, width, channel = img.shape
         # slice bins equally for each channel
         bins = np.linspace(0, 256, n_bin+1, endpoint=True)
 
-        if type == 'global':
+        if h_type == 'global':
             hist = self._count_hist(img, n_bin, bins, channel)
-
-        elif type == 'region':
+        elif h_type == 'region':
             hist = np.zeros((n_slice, n_slice, n_bin ** channel))
             h_slice = np.around(np.linspace(
                 0, height, n_slice+1, endpoint=True)).astype(int)
@@ -103,10 +59,10 @@ class Color(object):
 
             for hs in range(len(h_slice)-1):
                 for ws in range(len(w_slice)-1):
-                    img_r = img[h_slice[hs]:h_slice[hs+1], w_slice[ws]
-                        :w_slice[ws+1]]  # slice img to regions
-                    hist[hs][ws] = self._count_hist(
-                        img_r, n_bin, bins, channel)
+                    img_r = img[h_slice[hs]:h_slice[hs+1],
+                                w_slice[ws]:w_slice[ws+1]]
+                    hist[hs][ws] = self._count_hist(img_r, n_bin,
+                                                    bins, channel)
 
         if normalize:
             hist /= np.sum(hist)
@@ -115,15 +71,19 @@ class Color(object):
 
     def _count_hist(self, input, n_bin, bins, channel):
         img = input.copy()
-        bins_idx = {key: idx for idx, key in enumerate(itertools.product(
-            np.arange(n_bin), repeat=channel))}  # permutation of bins
+
+        # Permutation of bins
+        bins_idx = {key: idx for idx, key in
+                    enumerate(itertools.product(np.arange(n_bin), repeat=channel))}
         hist = np.zeros(n_bin ** channel)
 
-        # cluster every pixels
+        # Cluster every pixels
         for idx in range(len(bins)-1):
             img[(input >= bins[idx]) & (input < bins[idx+1])] = idx
-        # add pixels into bins
+
+        # Add pixels into bins
         height, width, _ = img.shape
+
         for h in range(height):
             for w in range(width):
                 b_idx = bins_idx[tuple(img[h, w])]
@@ -132,78 +92,56 @@ class Color(object):
         return hist
 
     def make_samples(self, db, verbose=True):
-        if h_type == 'global':
-            sample_cache = "histogram_cache-{}-n_bin{}".format(h_type, n_bin)
-        elif h_type == 'region':
+        if H_TYPE == 'global':
+            sample_cache = "histogram_cache-{}-n_bin{}".format(H_TYPE, N_BIN)
+        elif H_TYPE == 'region':
             sample_cache = "histogram_cache-{}-n_bin{}-n_slice{}".format(
-                h_type, n_bin, n_slice)
+                H_TYPE, N_BIN, N_SLICE)
 
         try:
             samples = pickle.load(
-                open(os.path.join(cache_dir, sample_cache), "rb", True))
+                open(os.path.join(CACHE_DIR, sample_cache), "rb", True))
             if verbose:
-                print("Using cache..., config=%s, distance=%s, depth=%s" %
-                      (sample_cache, d_type, depth))
-        except:
+                print('Using cache..., ',
+                      f'config={sample_cache}, ',
+                      f' distance={D_TYPE}, ',
+                      f'depth={DEPTH}')
+        except FileNotFoundError:
             if verbose:
-                print("Counting histogram..., config=%s, distance=%s, depth=%s" % (
-                    sample_cache, d_type, depth))
+                print('Counting histograms..., ',
+                      f'config={sample_cache}, ',
+                      f' distance={D_TYPE}, ',
+                      f'depth={DEPTH}')
+
             samples = []
             data = db.get_data()
+
             for d in data.itertuples():
                 d_img, d_cls = getattr(d, "img"), getattr(d, "cls")
                 d_hist = self.histogram(
-                    d_img, type=h_type, n_bin=n_bin, n_slice=n_slice)
+                    d_img, h_type=H_TYPE, n_bin=N_BIN, n_slice=N_SLICE)
                 samples.append({
                     'img':  d_img,
                     'cls':  d_cls,
                     'hist': d_hist
                 })
+
             pickle.dump(samples, open(os.path.join(
-                cache_dir, sample_cache), "wb", True))
+                CACHE_DIR, sample_cache), "wb", True))
 
         return samples
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     db = Database()
-    data = db.get_data()
-    color = Color()
 
-    # test normalize
-    hist = color.histogram(data.iloc[0, 0], type='global')
-    assert hist.sum() - 1 < 1e-9, "normalize false"
+    class_APs = evaluate_class(db, f_class=Color, d_type=D_TYPE, depth=DEPTH)
+    class_MAPs = []
 
-    # test histogram bins
-    def sigmoid(z):
-        a = 1.0 / (1.0 + np.exp(-1. * z))
-        return a
-    np.random.seed(0)
-    IMG = sigmoid(np.random.randn(2, 2, 3)) * 255
-    IMG = IMG.astype(int)
-    hist = color.histogram(IMG, type='global', n_bin=4)
-    assert np.equal(np.where(hist > 0)[0], np.array(
-        [37, 43, 58, 61])).all(), "global histogram implement failed"
-    hist = color.histogram(IMG, type='region', n_bin=4, n_slice=2)
-    assert np.equal(np.where(hist > 0)[0], np.array(
-        [58, 125, 165, 235])).all(), "region histogram implement failed"
+    for klass, APs in class_APs.items():
+        MAP = np.mean(APs)
+        class_MAPs.append(MAP)
 
-    # examinate distance
-    np.random.seed(1)
-    IMG = sigmoid(np.random.randn(4, 4, 3)) * 255
-    IMG = IMG.astype(int)
-    hist = color.histogram(IMG, type='region', n_bin=4, n_slice=2)
-    IMG2 = sigmoid(np.random.randn(4, 4, 3)) * 255
-    IMG2 = IMG2.astype(int)
-    hist2 = color.histogram(IMG2, type='region', n_bin=4, n_slice=2)
-    assert distance(hist, hist2, d_type='d1') == 2, "d1 implement failed"
-    assert distance(hist, hist2, d_type='d2-norm') == 2, "d2 implement failed"
+        print(f'Class: {klass}, MAP: {MAP}')
 
-    # evaluate database
-    APs = evaluate_class(db, f_class=Color, d_type=d_type, depth=depth)
-    cls_MAPs = []
-    for cls, cls_APs in APs.items():
-        MAP = np.mean(cls_APs)
-        print("Class {}, MAP {}".format(cls, MAP))
-        cls_MAPs.append(MAP)
-    print("MMAP", np.mean(cls_MAPs))
+    print("MMAP", np.mean(class_MAPs))
