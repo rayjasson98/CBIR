@@ -98,14 +98,14 @@ class HOG(object):
 
         elif type == 'region':
             hist = np.zeros((n_slice, n_slice, n_bin))
-            h_silce = np.around(np.linspace(
+            h_slice = np.around(np.linspace(
                 0, height, n_slice+1, endpoint=True)).astype(int)
             w_slice = np.around(np.linspace(
                 0, width, n_slice+1, endpoint=True)).astype(int)
 
-            for hs in range(len(h_silce)-1):
+            for hs in range(len(h_slice)-1):
                 for ws in range(len(w_slice)-1):
-                    img_r = img[h_silce[hs]:h_silce[hs+1], w_slice[ws]
+                    img_r = img[h_slice[hs]:h_slice[hs+1], w_slice[ws]
                         :w_slice[ws+1]]  # slice img to regions
                     hist[hs][ws] = self._HOG(img_r, n_bin)
 
