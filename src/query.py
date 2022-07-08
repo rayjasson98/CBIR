@@ -13,7 +13,6 @@ from glcm import GLCM
 
 DEPTH = 5
 D_TYPE = 'd1'
-QUERY_IDX = 0
 
 if __name__ == '__main__':
     db = Database()
@@ -31,15 +30,21 @@ if __name__ == '__main__':
 
     try:
         mthd = sys.argv[1].lower()
+        img_path = sys.argv[2].lower()
     except IndexError:
-        print(f'usage: {sys.argv[0]} <method>')
-        print("supported methods:\ncolor, daisy, edge, gabor, hog, vgg, resnet, glcm")
+        print(f'usage: {sys.argv[0]} <method> <img_path>')
+        print("supported methods: color, daisy, edge, gabor, hog, vgg, resnet, glcm")
 
         sys.exit(1)
 
     samples = getattr(methods[mthd](), "make_samples")(db)
+    query = next((sample for sample in samples if sample['img'] == img_path),
+                 None)
 
-    query = samples[QUERY_IDX]
+    if query is None:
+        print(f'{img_path} not found in database')
+        sys.exit(1)
+
     print(f'\n[+] query: {query["img"]}\n')
 
     _, result = infer(query, samples=samples, depth=DEPTH, d_type=D_TYPE)
