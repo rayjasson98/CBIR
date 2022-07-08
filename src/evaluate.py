@@ -99,6 +99,7 @@ def infer(query, samples=None, db=None, sample_db_fn=None, depth=None, d_type='d
             continue
 
         results.append({
+            'img': s_img,
             'dis': distance(q_hist, s_hist, d_type=d_type),
             'cls': s_cls
         })

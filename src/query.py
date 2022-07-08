@@ -45,4 +45,4 @@ if __name__ == '__main__':
     _, result = infer(query, samples=samples, depth=DEPTH, d_type=D_TYPE)
 
     for match in result:
-        print(f'{match["dis"]},\tClass {match["cls"]}')
+        print(f'{match["img"]}:\t{match["dis"]},\tClass {match["cls"]}')
